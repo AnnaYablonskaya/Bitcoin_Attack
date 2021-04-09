@@ -1,9 +1,3 @@
-#Compatible with Python 2 and Python 3
-#Based and improved implementation, inspired by: github.com/circulosmeos/bitcoin-in-tiny-pieces/blob/master/bitcoin-get-address-balance.py
-
-#Developed by: ~geniusprodigy
-#I have implemented and modified so that it is possible to automatically check list-based Bitcoin Addresses to work with massive volumes of scans.
-import sys
 import re
 from time import sleep
 from urllib.request import urlopen
@@ -52,7 +46,7 @@ def check_balance(address):
         exit(1)
 
     for i, btc_tokens in enumerate(blockchain_info_array):
-        if (blockchain_tags_json[i] == 'final_balance' and btc_tokens > 0.0): 
+        if (blockchain_tags_json[i] == 'final_balance' and btc_tokens/SATOSHIS_PER_BTC > 0.0):
             
             arq1.write("Bitcoin Address: %s" % check_address)
             arq1.write("\t Balance: %.8f Bitcoin" % (btc_tokens/SATOSHIS_PER_BTC))
