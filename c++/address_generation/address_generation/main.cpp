@@ -3,24 +3,26 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include<random>
-#include<chrono>
+#include <random>
+#include <chrono>
 
 #include <openssl/sha.h>
 #include <openssl/ripemd.h>
 #include <secp256k1.h>
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
-#include<httplib.h>
+#include <httplib.h>
 
 using namespace std;
 
 
 typedef unsigned char byte;
 
+//Инициализация контекста, требуемого для работы кривой secp256k1
 static secp256k1_context* ctx = secp256k1_context_create(
     SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
+//Создаем объект клиента для отправки запросов на этот сайт
 httplib::SSLClient cli("blockchain.info");
 
 
@@ -110,7 +112,7 @@ void check_address(string address)
 
 int main()
 {
-    byte privatekey[32];
+    byte privatekey[32]; //Секретный ключ
 
     secp256k1_pubkey publickey;
     size_t publickey_len = 65;
@@ -127,21 +129,22 @@ int main()
     auto t0 = chrono::system_clock::now();
     while ((chrono::system_clock::now() - t0) < chrono::seconds{ 2 })
     {
-        generate_private_key(privatekey);
+        generate_private_key(privatekey); //Создание секретного ключа
 
-        secp256k1_ec_pubkey_create(ctx, &publickey, privatekey);
-        secp256k1_ec_pubkey_serialize(ctx, publickey_ser, &publickey_len, &publickey, SECP256K1_EC_UNCOMPRESSED);
+        secp256k1_ec_pubkey_create(ctx, &publickey, privatekey); //Создание открытого ключа на основе секретного
+        secp256k1_ec_pubkey_serialize(ctx, publickey_ser, &publickey_len, &publickey, SECP256K1_EC_UNCOMPRESSED); //Сериализация публичного ключа
 
         address_byte[0] = 0;
-        RIPEMD160(SHA256(publickey_ser, publickey_len, 0), publickey_len, address_byte + 1);
+        RIPEMD160(SHA256(publickey_ser, publickey_len, 0), publickey_len, address_byte + 1);//Применение sha256 и ripemd160 к публичному ключу
 
+        //Присоединяем хэш-сумму
         memcpy(
             address_byte + 21,
             SHA256(SHA256(address_byte, 21, 0), SHA256_DIGEST_LENGTH, 0), //Checksum
             4
         );
 
-        base58(address_byte, 25, address, 34);
+        base58(address_byte, 25, address, 34); //Кодируем
         address[34] = '\0';
 
         count++;
@@ -157,6 +160,6 @@ int main()
     //Check the address
     cout << "\n\n--------Checking the address--------\n\n";
 
-    check_address(address);
+    check_address(address); //Проверка адреса на валидность
 
 }
