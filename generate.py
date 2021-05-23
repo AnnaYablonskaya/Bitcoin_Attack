@@ -7,7 +7,7 @@ from base58 import b58encode
 import re
 from urllib.request import urlopen
 
-
+# проверка баланса адреса
 def check_balance(address):
     # Add time different of 0 if you need more security on the checks
     WARN_WAIT_TIME = 0
@@ -20,7 +20,7 @@ def check_balance(address):
     SATOSHIS_PER_BTC = 1e+8
 
     check_address = address
-
+    # проверка адреса на валидность формата
     parse_address_structure = re.match(r' *([a-zA-Z1-9]{1,34})', check_address)
     if (parse_address_structure is not None or len(address) > 34):
         check_address = parse_address_structure.group(1)
@@ -54,6 +54,7 @@ def check_balance(address):
             return btc_tokens / SATOSHIS_PER_BTC
 
 
+# генерация случайного числа для приватного ключа
 def random_secret_exponent(curve_order):
     while True:
         bytes = os.urandom(32)
@@ -63,13 +64,15 @@ def random_secret_exponent(curve_order):
             return random_int
 
 
+# генерация приватного ключа
+# возвращается объект, представляющий приватный ключ
 def generate_private_key():
     curve = ecdsa.curves.SECP256k1
     se = random_secret_exponent(curve.order)
     from_secret_exponent = ecdsa.keys.SigningKey.from_secret_exponent
     return from_secret_exponent(se, curve, hashlib.sha256)
 
-# 1. Generating private key using ECDSA with curve SECP256k1 (should be described more)
+# 1. Generating private key using ECDSA with curve SECP256k1
 # 2. Getting public key from private
 # 3. Calculation control sum to check for any mistakes
 # 4. Getting address
@@ -77,15 +80,16 @@ start_time = time.time()
 
 for _ in range(20):
     # ecdsa - Elliptic Curve Digital Signature Algorithm
-    # private_key = ecdsa.SigningKey.generate(curve=ecdsa.SECP256k1)
     private_key = generate_private_key()
     # set of parameters named as SECP256k1
+    # получаем публичный ключ из приватного
     public_key = b'\04' + private_key.get_verifying_key().to_string()
 
+    # считаем первую часть адреса
     ripemd160 = hashlib.new('ripemd160')
     ripemd160.update(hashlib.sha256(public_key).digest())
     r = b'\0' + ripemd160.digest()
-
+    # подсчет контрольной суммы и конкаткнация ее с первой частью адреса
     checksum = hashlib.sha256(hashlib.sha256(r).digest()).digest()[0:4]
     address = b58encode(r + checksum)
 
